@@ -1,0 +1,477 @@
+import { BeatAgent } from "./BeatAgent";
+
+export interface Env {
+  BEAT_AGENT: DurableObjectNamespace;
+  AI: Ai;
+  VECTORIZE: VectorizeIndex;
+}
+
+// Simple static file serving for Pages
+async function serveStaticFile(pathname: string): Promise<Response> {
+  // For development, serve index.html for the root path
+  if (pathname === "/" || pathname === "") {
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeatPilot - AI DJ Co-Pilot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .container {
+            flex: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+        }
+
+        .session-controls {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+            margin: 0 10px;
+        }
+
+        .btn:hover {
+            background: #45a049;
+        }
+
+        .btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .btn.secondary {
+            background: #2196F3;
+        }
+
+        .btn.secondary:hover {
+            background: #0b7dda;
+        }
+
+        .chat-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            padding: 1rem;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: #4CAF50;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .message.ai {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            align-self: flex-start;
+        }
+
+        .suggestions {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+
+        .suggestion-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .suggestion-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .transition-plan {
+            font-style: italic;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .chat-input-container {
+            padding: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            gap: 1rem;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .session-info {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        .status.connected {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .status.disconnected {
+            background: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎧 BeatPilot</h1>
+        <p>AI DJ Co-Pilot for Perfect Transitions</p>
+    </div>
+
+    <div class="container">
+        <div class="session-controls">
+            <h2>DJ Session Control</h2>
+            <p>Start a new session or connect to an existing one</p>
+            <div style="margin-top: 1rem;">
+                <button class="btn" onclick="startNewSession()">Start New Session</button>
+                <button class="btn secondary" onclick="getSessionSummary()">Get Summary</button>
+            </div>
+            <div id="session-status" class="status disconnected" style="margin-top: 1rem;">
+                Disconnected
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-messages" id="chat-messages">
+                <div class="message ai">
+                    <strong>BeatPilot:</strong> Welcome to BeatPilot! Describe your current track or crowd vibe, and I'll suggest the perfect next tracks with transition plans.
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <input type="text" class="chat-input" id="vibe-input"
+                       placeholder="e.g., 'Playing deep house at 122 BPM, crowd is mellow...'"
+                       onkeypress="handleKeyPress(event)">
+                <button class="btn" onclick="analyzeVibe()">Get Suggestions</button>
+            </div>
+        </div>
+
+        <div class="session-info" id="session-info" style="display: none;">
+            <h3>Session Summary</h3>
+            <div id="summary-content"></div>
+        </div>
+    </div>
+
+    <script>
+        let sessionId = null;
+        let ws = null;
+        let isConnected = false;
+
+        function startNewSession() {
+            fetch('/new-session', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    sessionId = data.sessionId;
+                    connectWebSocket(data.agentUrl);
+                    addMessage('ai', \`New session started! Session ID: \${sessionId}\`);
+                })
+                .catch(error => {
+                    console.error('Error starting session:', error);
+                    addMessage('ai', 'Failed to start session. Please try again.');
+                });
+        }
+
+        function connectWebSocket(agentUrl) {
+            if (ws) {
+                ws.close();
+            }
+
+            // Use the same origin for WebSocket connection
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = \`\${protocol}//\${window.location.host}\${agentUrl}\`;
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = function() {
+                isConnected = true;
+                document.getElementById('session-status').textContent = 'Connected';
+                document.getElementById('session-status').className = 'status connected';
+                console.log('WebSocket connected');
+            };
+
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+
+            ws.onclose = function() {
+                isConnected = false;
+                document.getElementById('session-status').textContent = 'Disconnected';
+                document.getElementById('session-status').className = 'status disconnected';
+                console.log('WebSocket disconnected');
+            };
+
+            ws.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                addMessage('ai', 'Connection error. Please refresh and try again.');
+            };
+        }
+
+        function handleWebSocketMessage(data) {
+            switch (data.type) {
+                case 'suggestions':
+                    displaySuggestions(data.data);
+                    break;
+                case 'suggestion_accepted':
+                    addMessage('ai', \`✅ Track accepted: \${data.data.track}\`);
+                    break;
+                case 'session_summary':
+                    displaySessionSummary(data.data);
+                    break;
+                case 'error':
+                    addMessage('ai', \`❌ Error: \${data.data.message}\`);
+                    break;
+            }
+        }
+
+        function analyzeVibe() {
+            const input = document.getElementById('vibe-input').value.trim();
+            if (!input) return;
+
+            if (!isConnected) {
+                addMessage('ai', 'Please start a session first.');
+                return;
+            }
+
+            addMessage('user', input);
+
+            ws.send(JSON.stringify({
+                type: 'analyze_vibe',
+                input: input
+            }));
+
+            document.getElementById('vibe-input').value = '';
+        }
+
+        function displaySuggestions(data) {
+            const suggestionsHtml = data.suggestions.map((suggestion, index) =>
+                \`<div class="suggestion-item" onclick="acceptSuggestion(\${index})">
+                    \${suggestion}
+                </div>\`
+            ).join('');
+
+            const messageHtml = \`
+                <div class="suggestions">
+                    <strong>🎵 Suggested Tracks:</strong><br>
+                    \${suggestionsHtml}
+                    <div class="transition-plan">
+                        <strong>🎛️ Transition Plan:</strong><br>
+                        \${data.transition_plan}
+                    </div>
+                </div>
+            \`;
+
+            addMessage('ai', messageHtml, false);
+        }
+
+        function acceptSuggestion(index) {
+            if (!isConnected) return;
+
+            ws.send(JSON.stringify({
+                type: 'accept_suggestion',
+                trackIndex: index
+            }));
+
+            // Visual feedback
+            const suggestions = document.querySelectorAll('.suggestion-item');
+            if (suggestions[index]) {
+                suggestions[index].style.background = 'rgba(76, 175, 80, 0.3)';
+            }
+        }
+
+        function getSessionSummary() {
+            if (!isConnected) {
+                addMessage('ai', 'Please start a session first.');
+                return;
+            }
+
+            ws.send(JSON.stringify({
+                type: 'get_summary'
+            }));
+        }
+
+        function displaySessionSummary(summary) {
+            const summaryDiv = document.getElementById('session-info');
+            const contentDiv = document.getElementById('summary-content');
+
+            contentDiv.innerHTML = \`
+                <p><strong>Total Tracks Played:</strong> \${summary.totalTracks}</p>
+                \${summary.averageBPM ? \`<p><strong>Average BPM:</strong> \${summary.averageBPM}</p>\` : ''}
+            \`;
+
+            summaryDiv.style.display = 'block';
+        }
+
+        function addMessage(type, content, isText = true) {
+            const messagesDiv = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = \`message \${type}\`;
+
+            if (isText) {
+                messageDiv.innerHTML = \`<strong>\${type === 'user' ? 'You:' : 'BeatPilot:'}</strong> \${content}\`;
+            } else {
+                messageDiv.innerHTML = content;
+            }
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                analyzeVibe();
+            }
+        }
+
+        // Auto-start session on page load for demo
+        window.onload = function() {
+            setTimeout(() => {
+                startNewSession();
+            }, 500);
+        };
+    </script>
+</body>
+</html>`;
+
+    return new Response(html, {
+      headers: { "Content-Type": "text/html" }
+    });
+  }
+
+  return new Response("Not Found", { status: 404 });
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+
+    // Route for creating new agent sessions
+    if (url.pathname === "/new-session" && request.method === "POST") {
+      const id = env.BEAT_AGENT.newUniqueId();
+      const agent = env.BEAT_AGENT.get(id);
+
+      return new Response(JSON.stringify({
+        sessionId: id.toString(),
+        agentUrl: `/agent/${id.toString()}`
+      }), {
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    // Route WebSocket connections to Durable Objects
+    if (url.pathname.startsWith("/agent/") && request.headers.get("Upgrade") === "websocket") {
+      const agentId = url.pathname.split("/agent/")[1];
+      const agent = env.BEAT_AGENT.get(env.BEAT_AGENT.idFromString(agentId));
+
+      return await agent.fetch(request);
+    }
+
+    // Serve static files for non-API routes
+    if (request.method === "GET" && !url.pathname.startsWith("/agent/")) {
+      return await serveStaticFile(url.pathname);
+    }
+
+    return new Response("BeatPilot API", { status: 200 });
+  }
+};
+
+export { BeatAgent };

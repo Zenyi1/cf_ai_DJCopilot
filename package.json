@@ -1,0 +1,19 @@
+{
+  "name": "beatpilot-mvp",
+  "version": "0.1.0",
+  "description": "AI DJ Co-Pilot using Cloudflare Workers AI and Agents",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy && wrangler pages deploy ./public",
+    "build": "echo 'No build step needed for Pages'"
+  },
+  "keywords": ["cloudflare", "ai", "agents", "dj", "music"],
+  "author": "BeatPilot Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240926.0",
+    "typescript": "^5.0.0",
+    "wrangler": "^3.0.0",
+    "agents": "^0.1.0"
+  }
+}

@@ -1,0 +1,21 @@
+name = "beatpilot-mvp"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[site]
+bucket = "./public"
+
+[[durable_objects.bindings]]
+name = "BEAT_AGENT"
+class_name = "BeatAgent"
+
+[ai]
+binding = "AI"
+
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "beatpilot-memory"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["BeatAgent"]
