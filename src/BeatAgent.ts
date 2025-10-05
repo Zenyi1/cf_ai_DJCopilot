@@ -64,24 +64,74 @@ Do not include any other text, explanations, or markdown formatting. Only the JS
         const responseText = (response as any).response || (response as any).result || response.toString();
         console.log("AI Response:", responseText);
 
-        // More robust JSON cleaning for multi-line responses
-        let cleanedResponse = responseText.replace(/\n/g, ' ');
+        // Try multiple approaches to extract clean JSON
+        let cleanedResponse = responseText;
 
-        // Handle cases where newlines break JSON structure
+        // Approach 1: Extract JSON between first { and last }
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          cleanedResponse = jsonMatch[0];
+        }
+
+        // Approach 2: Manual cleanup for stubborn formatting
         cleanedResponse = cleanedResponse
-          .replace(/,\s*\n\s*/g, ', ')
-          .replace(/:\s*\n\s*/g, ': ')
-          .replace(/\s+/g, ' ')
+          .replace(/([{,]\s*)"\s*:\s*"/g, '$1": "')  // Fix quotes around keys
+          .replace(/"\s*,\s*"/g, '", "')            // Fix quotes in arrays
+          .replace(/\s*\n\s*/g, ' ')                 // Replace newlines with spaces
+          .replace(/\s*,\s*/g, ', ')                 // Normalize comma spacing
+          .replace(/\s*:\s*/g, ': ')                 // Normalize colon spacing
+          .replace(/\s+/g, ' ')                      // Multiple spaces to single
+          .replace(/,\s*([}\]])/g, '$1')             // Remove trailing commas
           .trim();
 
-        // Additional cleanup for common AI formatting issues
-        cleanedResponse = cleanedResponse
-          .replace(/,\s*]/g, ']')
-          .replace(/,\s*}/g, '}');
+        // Last resort: try to fix specific issues we know about
+        try {
+          // Check if it ends with a quote but should end with a brace
+          if (cleanedResponse.endsWith('"') && !cleanedResponse.endsWith('"}')) {
+            cleanedResponse = cleanedResponse.slice(0, -1) + '"}';
+          }
 
-        console.log("Cleaned Response:", cleanedResponse);
+          // Ensure it starts and ends correctly
+          if (!cleanedResponse.startsWith('{')) {
+            cleanedResponse = '{' + cleanedResponse;
+          }
 
-        suggestions = JSON.parse(cleanedResponse);
+          console.log("Final cleaned response:", cleanedResponse);
+          console.log("Length:", cleanedResponse.length);
+
+          suggestions = JSON.parse(cleanedResponse);
+        } catch (finalError) {
+          console.error("Even after cleaning, JSON parsing failed:", finalError);
+          console.error("Attempting manual fix...");
+
+          // Ultimate fallback: manually construct from the response
+          try {
+            const suggestionsMatch = responseText.match(/"suggestions":\s*\[(.*?)\]/s);
+            const transitionMatch = responseText.match(/"transition_plan":\s*"([^"]+)"/);
+
+            if (suggestionsMatch && transitionMatch) {
+              const suggestionsText = suggestionsMatch[1];
+              const transitionPlan = transitionMatch[1];
+
+              // Parse the suggestions array manually
+              const suggestionItems = suggestionsText.split(',').map((item: string) =>
+                item.replace(/"/g, '').trim()
+              );
+
+              suggestions = {
+                suggestions: suggestionItems,
+                transition_plan: transitionPlan
+              };
+
+              console.log("Manual parsing succeeded:", suggestions);
+            } else {
+              throw new Error("Manual parsing also failed");
+            }
+          } catch (manualError) {
+            console.error("Manual parsing failed too:", manualError);
+            throw finalError;
+          }
+        }
       } catch (parseError) {
         console.error("Failed to parse AI response:", parseError);
         console.error("Raw response:", response);
@@ -89,9 +139,9 @@ Do not include any other text, explanations, or markdown formatting. Only the JS
         // Fallback: create a basic suggestion if JSON parsing fails
         suggestions = {
           suggestions: [
-            "Lost Frequencies - Solomun (BPM: 120)",
-            "Higher Ground - Andhim (BPM: 122)",
-            "Say My Name - Oliver Heldens (BPM: 121)"
+            "I See You Baby - Groovechronics (120)",
+            "Get Get Down - DJ Gomi (122)",
+            "Higher - DJ Spen & Karizma (121)"
           ],
           transition_plan: "Gradually increase energy while maintaining the current BPM range. Use a 16-bar phrase to mix in the new track."
         };
@@ -109,9 +159,9 @@ Do not include any other text, explanations, or markdown formatting. Only the JS
       // Fallback suggestions if AI fails completely
       const fallbackSuggestions = {
         suggestions: [
-          "Lost Frequencies - Solomun (BPM: 120)",
-          "Higher Ground - Andhim (BPM: 122)",
-          "Say My Name - Oliver Heldens (BPM: 121)"
+          "I See You Baby - Groovechronics (120)",
+          "Get Get Down - DJ Gomi (122)",
+          "Higher - DJ Spen & Karizma (121)"
         ],
         transition_plan: "Gradually increase energy while maintaining the current BPM range. Use a 16-bar phrase to mix in the new track."
       };
