@@ -15,7 +15,3 @@ binding = "AI"
 [[vectorize]]
 binding = "VECTORIZE"
 index_name = "beatpilot-memory"
-
-[[migrations]]
-tag = "v1"
-new_classes = ["BeatAgent"]

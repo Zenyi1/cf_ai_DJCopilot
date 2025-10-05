@@ -263,11 +263,7 @@
                 ws.close();
             }
 
-            // Use the same origin for WebSocket connection
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}${agentUrl}`;
-
-            ws = new WebSocket(wsUrl);
+            ws = new WebSocket(`wss://${agentUrl}`);
 
             ws.onopen = function() {
                 isConnected = true;
