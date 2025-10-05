@@ -43,7 +43,7 @@ IMPORTANT: Respond ONLY with valid JSON in this exact format:
   "transition_plan": "Gradually increase energy while maintaining the current BPM range. Use a 16-bar phrase to mix in the new track."
 }
 
-Choose from well-known, real electronic/dance songs that actually exist. Use real artists and accurate BPM values. Popular choices include: Darude, Avicii, Martin Garrix, David Guetta, Calvin Harris, Swedish House Mafia, Tiesto, Armin van Buuren, Hardwell, Dimitri Vegas & Like Mike.`;
+Choose from well-known, real electronic/dance songs that actually exist. Use real artists and accurate BPM values. Popular choices include: Darude, Avicii, Martin Garrix, David Guetta, Calvin Harris, Swedish House Mafia, Tiesto, Armin van Buuren, Hardwell, Dimitri Vegas & Like Mike. Create creative and unique transition plans for each reply`;
 
       console.log("Calling AI with input:", input);
 
