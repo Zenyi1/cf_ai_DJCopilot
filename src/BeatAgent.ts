@@ -39,11 +39,11 @@ Input: "${input}"
 
 IMPORTANT: Respond ONLY with valid JSON in this exact format:
 {
-  "suggestions": ["Track 1 - Artist 1 (BPM: 120)", "Track 2 - Artist 2 (BPM: 122)", "Track 3 - Artist 3 (BPM: 121)"],
+  "suggestions": ["Sandstorm - Darude (128 BPM)", "Levels - Avicii (126 BPM)", "Animals - Martin Garrix (128 BPM)"],
   "transition_plan": "Gradually increase energy while maintaining the current BPM range. Use a 16-bar phrase to mix in the new track."
 }
 
-Do not include any other text, explanations, or markdown formatting. Only the JSON object.`;
+Choose from well-known, real electronic/dance songs that actually exist. Use real artists and accurate BPM values. Popular choices include: Darude, Avicii, Martin Garrix, David Guetta, Calvin Harris, Swedish House Mafia, Tiesto, Armin van Buuren, Hardwell, Dimitri Vegas & Like Mike.`;
 
       console.log("Calling AI with input:", input);
 
@@ -139,9 +139,9 @@ Do not include any other text, explanations, or markdown formatting. Only the JS
         // Fallback: create a basic suggestion if JSON parsing fails
         suggestions = {
           suggestions: [
-            "I See You Baby - Groovechronics (120)",
-            "Get Get Down - DJ Gomi (122)",
-            "Higher - DJ Spen & Karizma (121)"
+            "Sandstorm - Darude (128 BPM)",
+            "Levels - Avicii (126 BPM)",
+            "Animals - Martin Garrix (128 BPM)"
           ],
           transition_plan: "Gradually increase energy while maintaining the current BPM range. Use a 16-bar phrase to mix in the new track."
         };
@@ -159,9 +159,9 @@ Do not include any other text, explanations, or markdown formatting. Only the JS
       // Fallback suggestions if AI fails completely
       const fallbackSuggestions = {
         suggestions: [
-          "I See You Baby - Groovechronics (120)",
-          "Get Get Down - DJ Gomi (122)",
-          "Higher - DJ Spen & Karizma (121)"
+          "Sandstorm - Darude (128 BPM)",
+          "Levels - Avicii (126 BPM)",
+          "Animals - Martin Garrix (128 BPM)"
         ],
         transition_plan: "Gradually increase energy while maintaining the current BPM range. Use a 16-bar phrase to mix in the new track."
       };
